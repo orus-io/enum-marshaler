@@ -306,8 +306,15 @@ func (g *Generator) generate(typeName string) {
 	default:
 		g.buildMap(runs, typeName)
 	}
-	g.Printf("\n")
 	g.buildMarshaler(typeName)
+	switch {
+	case len(runs) == 1:
+		g.buildUnmarshalerOneRun(runs, typeName)
+	case len(runs) <= 10:
+		//g.buildUnmarshalerOneRun(runs, typeName)
+	default:
+		//g.buildUnmarshalerOneRun(runs, typeName)
+	}
 }
 
 // splitIntoRuns breaks the values into runs of contiguous sequences.
@@ -639,11 +646,61 @@ const stringMap = `func (i %[1]s) String() string {
 
 // buildMarshaler build a encoding.TextMarshaler implementation
 func (g *Generator) buildMarshaler(typeName string) {
+	g.Printf("\n")
 	g.Printf(stringMarshaler, typeName)
 }
 
 // Argument to format is the type name.
 const stringMarshaler = `func (i %[1]s) TextMarshal() ([]byte, error) {
 	return []byte(i.String()), nil
+}
+`
+
+// buildUnmarshalerOneRun generates the UnmarshalText method for a single run of contiguous values.
+func (g *Generator) buildUnmarshalerOneRun(runs [][]Value, typeName string) {
+	values := runs[0]
+	g.Printf("\n")
+	// The generated code is simple enough to write as a Printf format.
+	lessThanZero := ""
+	if values[0].signed {
+		lessThanZero = "i < 0 || "
+	}
+	if values[0].value == 0 { // Signed or unsigned, 0 is still 0.
+		g.Printf(stringUnmarshalOneRun, typeName, usize(len(values)), lessThanZero)
+	} else {
+		g.Printf(stringUnmarshalOneRunWithOffset, typeName, values[0].String(), usize(len(values)), lessThanZero)
+	}
+}
+
+// Arguments to format are:
+//	[1]: type name
+//	[2]: size of index element (8 for uint8 etc.)
+//	[3]: less than zero check (for signed types)
+const stringUnmarshalOneRun = `func (i *%[1]s) UnmarshalText(text []byte) error {
+	for idx := range _%[1]s_index[1:] {
+		if string(text) == _%[1]s_name[_%[1]s_index[idx]:_%[1]s_index[idx+1]] {
+			*i = %[1]s(idx)
+			return nil
+		}
+	}
+	return fmt.Errorf("Invalid %[1]s: '%%s'", text)
+}
+`
+
+// Arguments to format are:
+//	[1]: type name
+//	[2]: lowest defined value for type, as a string
+//	[3]: size of index element (8 for uint8 etc.)
+//	[4]: less than zero check (for signed types)
+/*
+ */
+const stringUnmarshalOneRunWithOffset = `func (i *%[1]s) UnmarshalText(text []byte) error {
+	for idx := range _%[1]s_index[1:] {
+		if string(text) == _%[1]s_name[_%[1]s_index[idx]:_%[1]s_index[idx+1]] {
+			*i = %[1]s(idx + %[2]s)
+			return nil
+		}
+	}
+	return fmt.Errorf("Invalid %[1]s: '%%s'", text)
 }
 `

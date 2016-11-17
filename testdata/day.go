@@ -6,7 +6,10 @@
 
 package main
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type Day int
 
@@ -35,5 +38,21 @@ func main() {
 func ck(day Day, str string) {
 	if fmt.Sprint(day) != str {
 		panic("day.go: " + str)
+	}
+
+	var value Day
+	u := interface{}(&value).(encoding.TextUnmarshaler)
+	err := u.UnmarshalText([]byte(str))
+	if day < Monday || day > Sunday {
+		if err == nil || err.Error() != "Invalid Day: '"+str+"'" {
+			panic("day.go: no error when it should")
+		}
+	} else {
+		if err != nil {
+			panic("day.go: " + err.Error())
+		}
+		if value != day {
+			panic("day.go: " + str + " parsed as " + fmt.Sprint(day))
+		}
 	}
 }

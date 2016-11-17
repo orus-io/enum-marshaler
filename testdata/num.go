@@ -6,7 +6,10 @@
 
 package main
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type Num int
 
@@ -31,5 +34,21 @@ func main() {
 func ck(num Num, str string) {
 	if fmt.Sprint(num) != str {
 		panic("num.go: " + str)
+	}
+
+	var value Num
+	u := interface{}(&value).(encoding.TextUnmarshaler)
+	err := u.UnmarshalText([]byte(str))
+	if num < m_2 || num > m2 {
+		if err == nil || err.Error() != "Invalid Num: '"+str+"'" {
+			panic("num.go: no error when it should")
+		}
+	} else {
+		if err != nil {
+			panic("num.go: " + err.Error())
+		}
+		if value != num {
+			panic("num.go: " + str + " parsed as " + fmt.Sprint(num))
+		}
 	}
 }

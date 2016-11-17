@@ -7,7 +7,10 @@
 
 package main
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type Number int
 
@@ -30,5 +33,21 @@ func main() {
 func ck(num Number, str string) {
 	if fmt.Sprint(num) != str {
 		panic("number.go: " + str)
+	}
+
+	var value Number
+	u := interface{}(&value).(encoding.TextUnmarshaler)
+	err := u.UnmarshalText([]byte(str))
+	if num < One || num > Three {
+		if err == nil || err.Error() != "Invalid Number: '"+str+"'" {
+			panic("num.go: no error when it should")
+		}
+	} else {
+		if err != nil {
+			panic("num.go: " + err.Error())
+		}
+		if value != num {
+			panic("num.go: " + str + " parsed as " + fmt.Sprint(num))
+		}
 	}
 }

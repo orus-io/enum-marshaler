@@ -60,6 +60,16 @@ func (i Day) String() string {
 func (i Day) TextMarshal() ([]byte, error) {
 	return []byte(i.String()), nil
 }
+
+func (i *Day) UnmarshalText(text []byte) error {
+	for idx := range _Day_index[1:] {
+		if string(text) == _Day_name[_Day_index[idx]:_Day_index[idx+1]] {
+			*i = Day(idx)
+			return nil
+		}
+	}
+	return fmt.Errorf("Invalid Day: '%s'", text)
+}
 `
 
 // Enumeration with an offset.
@@ -89,6 +99,16 @@ func (i Number) String() string {
 
 func (i Number) TextMarshal() ([]byte, error) {
 	return []byte(i.String()), nil
+}
+
+func (i *Number) UnmarshalText(text []byte) error {
+	for idx := range _Number_index[1:] {
+		if string(text) == _Number_name[_Number_index[idx]:_Number_index[idx+1]] {
+			*i = Number(idx + 1)
+			return nil
+		}
+	}
+	return fmt.Errorf("Invalid Number: '%s'", text)
 }
 `
 
@@ -165,6 +185,16 @@ func (i Num) String() string {
 
 func (i Num) TextMarshal() ([]byte, error) {
 	return []byte(i.String()), nil
+}
+
+func (i *Num) UnmarshalText(text []byte) error {
+	for idx := range _Num_index[1:] {
+		if string(text) == _Num_name[_Num_index[idx]:_Num_index[idx+1]] {
+			*i = Num(idx + -2)
+			return nil
+		}
+	}
+	return fmt.Errorf("Invalid Num: '%s'", text)
 }
 `
 
