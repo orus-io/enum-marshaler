@@ -176,7 +176,7 @@ func (i *Gap) UnmarshalText(text []byte) error {
 		*i = 11
 		return nil
 	}
-	return fmt.Errorf("Invalid Gap: '%s'", sText)
+	return fmt.Errorf("Invalid Gap: '%s'", text)
 }
 `
 
@@ -274,7 +274,7 @@ func (i *Unum) UnmarshalText(text []byte) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Invalid Unum: '%s'", sText)
+	return fmt.Errorf("Invalid Unum: '%s'", text)
 }
 `
 

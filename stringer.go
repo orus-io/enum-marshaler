@@ -79,8 +79,10 @@ import (
 )
 
 var (
-	typeNames = flag.String("type", "", "comma-separated list of type names; must be set")
-	output    = flag.String("output", "", "output file name; default srcdir/<type>_string.go")
+	typeNames   = flag.String("type", "", "comma-separated list of type names; must be set")
+	output      = flag.String("output", "", "output file name; default srcdir/<type>_string.go")
+	prefix      = flag.String("prefix", "", "prefix to strip from value names in mashal/unmarshal; default to nothing")
+	stripPrefix string
 )
 
 // Usage is a replacement usage function for the flags package.
@@ -102,6 +104,9 @@ func main() {
 	if len(*typeNames) == 0 {
 		flag.Usage()
 		os.Exit(2)
+	}
+	if len(*prefix) > 0 {
+		stripPrefix = fmt.Sprintf("[%d:]", len(*prefix))
 	}
 	types := strings.Split(*typeNames, ",")
 
@@ -647,12 +652,15 @@ const stringMap = `func (i %[1]s) String() string {
 // buildMarshaler build a encoding.TextMarshaler implementation
 func (g *Generator) buildMarshaler(typeName string) {
 	g.Printf("\n")
-	g.Printf(stringMarshaler, typeName)
+
+	g.Printf(stringMarshaler, typeName, stripPrefix)
 }
 
-// Argument to format is the type name.
+// Argument to format are:
+//  [1]: the type name.
+//  [2]: the prefix len.
 const stringMarshaler = `func (i %[1]s) TextMarshal() ([]byte, error) {
-	return []byte(i.String()), nil
+	return []byte(i.String()%[2]s), nil
 }
 `
 
@@ -666,9 +674,9 @@ func (g *Generator) buildUnmarshalerOneRun(runs [][]Value, typeName string) {
 		lessThanZero = "i < 0 || "
 	}
 	if values[0].value == 0 { // Signed or unsigned, 0 is still 0.
-		g.Printf(stringUnmarshalOneRun, typeName, usize(len(values)), lessThanZero)
+		g.Printf(stringUnmarshalOneRun, typeName, usize(len(values)), lessThanZero, stripPrefix)
 	} else {
-		g.Printf(stringUnmarshalOneRunWithOffset, typeName, values[0].String(), usize(len(values)), lessThanZero)
+		g.Printf(stringUnmarshalOneRunWithOffset, typeName, values[0].String(), usize(len(values)), lessThanZero, stripPrefix)
 	}
 }
 
@@ -676,9 +684,10 @@ func (g *Generator) buildUnmarshalerOneRun(runs [][]Value, typeName string) {
 //	[1]: type name
 //	[2]: size of index element (8 for uint8 etc.)
 //	[3]: less than zero check (for signed types)
+//	[4]: prefix len
 const stringUnmarshalOneRun = `func (i *%[1]s) UnmarshalText(text []byte) error {
 	for idx := range _%[1]s_index[1:] {
-		if string(text) == _%[1]s_name[_%[1]s_index[idx]:_%[1]s_index[idx+1]] {
+		if string(text) == _%[1]s_name[_%[1]s_index[idx]:_%[1]s_index[idx+1]]%[4]s {
 			*i = %[1]s(idx)
 			return nil
 		}
@@ -692,11 +701,12 @@ const stringUnmarshalOneRun = `func (i *%[1]s) UnmarshalText(text []byte) error 
 //	[2]: lowest defined value for type, as a string
 //	[3]: size of index element (8 for uint8 etc.)
 //	[4]: less than zero check (for signed types)
+//	[5]: prefix len
 /*
  */
 const stringUnmarshalOneRunWithOffset = `func (i *%[1]s) UnmarshalText(text []byte) error {
 	for idx := range _%[1]s_index[1:] {
-		if string(text) == _%[1]s_name[_%[1]s_index[idx]:_%[1]s_index[idx+1]] {
+		if string(text) == _%[1]s_name[_%[1]s_index[idx]:_%[1]s_index[idx+1]]%[5]s {
 			*i = %[1]s(idx + %[2]s)
 			return nil
 		}
@@ -709,7 +719,11 @@ const stringUnmarshalOneRunWithOffset = `func (i *%[1]s) UnmarshalText(text []by
 func (g *Generator) buildUnmarshalerMultipleRuns(runs [][]Value, typeName string) {
 	g.Printf("\n")
 	g.Printf("func (i *%s) UnmarshalText(text []byte) error {\n", typeName)
-	g.Printf("\tsText := string(text)\n")
+	if len(*prefix) == 0 {
+		g.Printf("\tsText := string(text)\n")
+	} else {
+		g.Printf("\tsText := %s + string(text)\n", *prefix)
+	}
 	for i, values := range runs {
 		if len(values) == 1 {
 			g.Printf("\tif sText == _%s_name_%d {\n", typeName, i)
@@ -726,7 +740,7 @@ func (g *Generator) buildUnmarshalerMultipleRuns(runs [][]Value, typeName string
 		g.Printf("\t}\n")
 
 	}
-	g.Printf("\treturn fmt.Errorf(\"Invalid %s: '%%s'\", sText)\n", typeName)
+	g.Printf("\treturn fmt.Errorf(\"Invalid %s: '%%s'\", text)\n", typeName)
 	g.Printf("}\n")
 }
 
@@ -744,7 +758,7 @@ func (g *Generator) buildUnmarshalerMap(runs [][]Value, typeName string) {
 	n := 0
 	for _, values := range runs {
 		for _, value := range values {
-			g.Printf("\tcase _%s_name[%d:%d]:\n", typeName, n, n+len(value.name))
+			g.Printf("\tcase _%s_name[%d:%d]:\n", typeName, n+len(*prefix), n+len(value.name))
 			g.Printf("\t\t*i = %s\n", &value)
 			n += len(value.name)
 		}
