@@ -328,6 +328,41 @@ func (i Prime) String() string {
 func (i Prime) TextMarshal() ([]byte, error) {
 	return []byte(i.String()), nil
 }
+
+func (i *Prime) UnmarshalText(text []byte) error {
+	sText := string(text)
+	switch sText {
+	case _Prime_name[0:2]:
+		*i = 2
+	case _Prime_name[2:4]:
+		*i = 3
+	case _Prime_name[4:6]:
+		*i = 5
+	case _Prime_name[6:8]:
+		*i = 7
+	case _Prime_name[8:11]:
+		*i = 11
+	case _Prime_name[11:14]:
+		*i = 13
+	case _Prime_name[14:17]:
+		*i = 17
+	case _Prime_name[17:20]:
+		*i = 19
+	case _Prime_name[20:23]:
+		*i = 23
+	case _Prime_name[23:26]:
+		*i = 29
+	case _Prime_name[26:29]:
+		*i = 31
+	case _Prime_name[29:32]:
+		*i = 41
+	case _Prime_name[32:35]:
+		*i = 43
+	default:
+		return fmt.Errorf("Invalid Prime: '%s'", sText)
+	}
+	return nil
+}
 `
 
 func TestGolden(t *testing.T) {

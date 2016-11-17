@@ -7,7 +7,10 @@
 
 package main
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type Prime int
 
@@ -52,5 +55,21 @@ func main() {
 func ck(prime Prime, str string) {
 	if fmt.Sprint(prime) != str {
 		panic("prime.go: " + str)
+	}
+
+	var value Prime
+	u := interface{}(&value).(encoding.TextUnmarshaler)
+	err := u.UnmarshalText([]byte(str))
+	if len(str) > 3 {
+		if err == nil || err.Error() != "Invalid Prime: '"+str+"'" {
+			panic("prime.go: " + str + " -> no error when it should")
+		}
+	} else {
+		if err != nil {
+			panic("prime.go: " + err.Error())
+		}
+		if value != prime {
+			panic("prime.go: " + str + " parsed as " + fmt.Sprint(prime))
+		}
 	}
 }

@@ -313,7 +313,7 @@ func (g *Generator) generate(typeName string) {
 	case len(runs) <= 10:
 		g.buildUnmarshalerMultipleRuns(runs, typeName)
 	default:
-		//g.buildUnmarshalerOneRun(runs, typeName)
+		g.buildUnmarshalerMap(runs, typeName)
 	}
 }
 
@@ -727,5 +727,31 @@ func (g *Generator) buildUnmarshalerMultipleRuns(runs [][]Value, typeName string
 
 	}
 	g.Printf("\treturn fmt.Errorf(\"Invalid %s: '%%s'\", sText)\n", typeName)
+	g.Printf("}\n")
+}
+
+// buildUnmarshalerMap generates UnmarshalText method for case where the space is so
+// sparse a map is a reasonable fallback.
+// According to a few benchmark I did, a switch is faster than a map when
+// the list of value is lower than ~128 (the actual value is somewhere between 64
+// and 128). Assuming enums are for smaller values than that.
+// The tradeoff in code size may not be worth it though.
+func (g *Generator) buildUnmarshalerMap(runs [][]Value, typeName string) {
+	g.Printf("\n")
+	g.Printf("func (i *%[1]s) UnmarshalText(text []byte) error {\n", typeName)
+	g.Printf("\tsText := string(text)\n")
+	g.Printf("\tswitch(sText) {\n")
+	n := 0
+	for _, values := range runs {
+		for _, value := range values {
+			g.Printf("\tcase _%s_name[%d:%d]:\n", typeName, n, n+len(value.name))
+			g.Printf("\t\t*i = %s\n", &value)
+			n += len(value.name)
+		}
+	}
+	g.Printf("\tdefault:\n")
+	g.Printf("\t\treturn fmt.Errorf(\"Invalid %s: '%%s'\", sText)\n", typeName)
+	g.Printf("\t}\n")
+	g.Printf("\treturn nil\n")
 	g.Printf("}\n")
 }
