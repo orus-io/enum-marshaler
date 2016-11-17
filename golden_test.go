@@ -157,6 +157,27 @@ func (i Gap) String() string {
 func (i Gap) TextMarshal() ([]byte, error) {
 	return []byte(i.String()), nil
 }
+
+func (i *Gap) UnmarshalText(text []byte) error {
+	sText := string(text)
+	for j := 0; j < 2; j++ {
+		if sText == _Gap_name_0[_Gap_index_0[j]:_Gap_index_0[j+1]] {
+			*i = Gap(j + 2)
+			return nil
+		}
+	}
+	for j := 0; j < 5; j++ {
+		if sText == _Gap_name_1[_Gap_index_1[j]:_Gap_index_1[j+1]] {
+			*i = Gap(j + 5)
+			return nil
+		}
+	}
+	if sText == _Gap_name_2 {
+		*i = 11
+		return nil
+	}
+	return fmt.Errorf("Invalid Gap: '%s'", sText)
+}
 `
 
 // Signed integers spanning zero.
@@ -237,6 +258,23 @@ func (i Unum) String() string {
 
 func (i Unum) TextMarshal() ([]byte, error) {
 	return []byte(i.String()), nil
+}
+
+func (i *Unum) UnmarshalText(text []byte) error {
+	sText := string(text)
+	for j := 0; j < 3; j++ {
+		if sText == _Unum_name_0[_Unum_index_0[j]:_Unum_index_0[j+1]] {
+			*i = Unum(j + 0)
+			return nil
+		}
+	}
+	for j := 0; j < 2; j++ {
+		if sText == _Unum_name_1[_Unum_index_1[j]:_Unum_index_1[j+1]] {
+			*i = Unum(j + 253)
+			return nil
+		}
+	}
+	return fmt.Errorf("Invalid Unum: '%s'", sText)
 }
 `
 

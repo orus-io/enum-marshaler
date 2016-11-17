@@ -6,7 +6,10 @@
 
 package main
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type Gap int
 
@@ -40,5 +43,21 @@ func main() {
 func ck(gap Gap, str string) {
 	if fmt.Sprint(gap) != str {
 		panic("gap.go: " + str)
+	}
+
+	var value Gap
+	u := interface{}(&value).(encoding.TextUnmarshaler)
+	err := u.UnmarshalText([]byte(str))
+	if str[:3] == "Gap" {
+		if err == nil || err.Error() != "Invalid Gap: '"+str+"'" {
+			panic("gap.go: no error when it should")
+		}
+	} else {
+		if err != nil {
+			panic("gap.go: " + err.Error())
+		}
+		if value != gap {
+			panic("gap.go: " + str + " parsed as " + fmt.Sprint(gap))
+		}
 	}
 }

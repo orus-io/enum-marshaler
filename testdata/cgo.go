@@ -11,7 +11,10 @@ package main
 */
 import "C"
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type Cgo uint32
 
@@ -25,8 +28,24 @@ func main() {
 	ck(MustScanSubDirs, "MustScanSubDirs")
 }
 
-func ck(day Cgo, str string) {
-	if fmt.Sprint(day) != str {
+func ck(cgo Cgo, str string) {
+	if fmt.Sprint(cgo) != str {
 		panic("cgo.go: " + str)
+	}
+
+	var value Cgo
+	u := interface{}(&value).(encoding.TextUnmarshaler)
+	err := u.UnmarshalText([]byte(str))
+	if cgo != MustScanSubDirs {
+		if err == nil || err.Error() != "Invalid Cgo: '"+str+"'" {
+			panic("day.go: no error when it should")
+		}
+	} else {
+		if err != nil {
+			panic("cgo.go: " + err.Error())
+		}
+		if value != cgo {
+			panic("cgo.go: " + str + " parsed as " + fmt.Sprint(cgo))
+		}
 	}
 }

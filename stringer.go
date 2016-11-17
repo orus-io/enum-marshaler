@@ -311,7 +311,7 @@ func (g *Generator) generate(typeName string) {
 	case len(runs) == 1:
 		g.buildUnmarshalerOneRun(runs, typeName)
 	case len(runs) <= 10:
-		//g.buildUnmarshalerOneRun(runs, typeName)
+		g.buildUnmarshalerMultipleRuns(runs, typeName)
 	default:
 		//g.buildUnmarshalerOneRun(runs, typeName)
 	}
@@ -704,3 +704,28 @@ const stringUnmarshalOneRunWithOffset = `func (i *%[1]s) UnmarshalText(text []by
 	return fmt.Errorf("Invalid %[1]s: '%%s'", text)
 }
 `
+
+// buildUnmarshalerMultipleRuns generates UnmarshalText method for multiple runs of contiguous values.
+func (g *Generator) buildUnmarshalerMultipleRuns(runs [][]Value, typeName string) {
+	g.Printf("\n")
+	g.Printf("func (i *%s) UnmarshalText(text []byte) error {\n", typeName)
+	g.Printf("\tsText := string(text)\n")
+	for i, values := range runs {
+		if len(values) == 1 {
+			g.Printf("\tif sText == _%s_name_%d {\n", typeName, i)
+			g.Printf("\t\t*i = %s\n", &values[0])
+			g.Printf("\t\treturn nil\n")
+			g.Printf("\t}\n")
+			continue
+		}
+		g.Printf("\tfor j := 0; j < %d; j++ {\n", len(values))
+		g.Printf("\t\tif sText == _%[1]s_name_%[2]d[_%[1]s_index_%[2]d[j]:_%[1]s_index_%[2]d[j+1]] {\n", typeName, i)
+		g.Printf("\t\t\t*i = %s(j+%s)\n", typeName, &values[0])
+		g.Printf("\t\t\treturn nil\n")
+		g.Printf("\t\t}\n")
+		g.Printf("\t}\n")
+
+	}
+	g.Printf("\treturn fmt.Errorf(\"Invalid %s: '%%s'\", sText)\n", typeName)
+	g.Printf("}\n")
+}

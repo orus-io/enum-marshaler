@@ -6,7 +6,10 @@
 
 package main
 
-import "fmt"
+import (
+	"encoding"
+	"fmt"
+)
 
 type Unum uint8
 
@@ -34,5 +37,21 @@ func main() {
 func ck(unum Unum, str string) {
 	if fmt.Sprint(unum) != str {
 		panic("unum.go: " + str)
+	}
+
+	var value Unum
+	u := interface{}(&value).(encoding.TextUnmarshaler)
+	err := u.UnmarshalText([]byte(str))
+	if len(str) >= 4 && str[:4] == "Unum" {
+		if err == nil || err.Error() != "Invalid Unum: '"+str+"'" {
+			panic("unum.go: no error when it should")
+		}
+	} else {
+		if err != nil {
+			panic("unum.go: " + err.Error())
+		}
+		if value != unum {
+			panic("unum.go: " + str + " parsed as " + fmt.Sprint(unum))
+		}
 	}
 }
