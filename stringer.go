@@ -306,6 +306,8 @@ func (g *Generator) generate(typeName string) {
 	default:
 		g.buildMap(runs, typeName)
 	}
+	g.Printf("\n")
+	g.buildMarshaler(typeName)
 }
 
 // splitIntoRuns breaks the values into runs of contiguous sequences.
@@ -632,5 +634,16 @@ const stringMap = `func (i %[1]s) String() string {
 		return str
 	}
 	return fmt.Sprintf("%[1]s(%%d)", i)
+}
+`
+
+// buildMarshaler build a encoding.TextMarshaler implementation
+func (g *Generator) buildMarshaler(typeName string) {
+	g.Printf(stringMarshaler, typeName)
+}
+
+// Argument to format is the type name.
+const stringMarshaler = `func (i %[1]s) TextMarshal() ([]byte, error) {
+	return []byte(i.String()), nil
 }
 `

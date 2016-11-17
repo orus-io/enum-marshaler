@@ -56,6 +56,10 @@ func (i Day) String() string {
 	}
 	return _Day_name[_Day_index[i]:_Day_index[i+1]]
 }
+
+func (i Day) TextMarshal() ([]byte, error) {
+	return []byte(i.String()), nil
+}
 `
 
 // Enumeration with an offset.
@@ -81,6 +85,10 @@ func (i Number) String() string {
 		return fmt.Sprintf("Number(%d)", i+1)
 	}
 	return _Number_name[_Number_index[i]:_Number_index[i+1]]
+}
+
+func (i Number) TextMarshal() ([]byte, error) {
+	return []byte(i.String()), nil
 }
 `
 
@@ -125,6 +133,10 @@ func (i Gap) String() string {
 		return fmt.Sprintf("Gap(%d)", i)
 	}
 }
+
+func (i Gap) TextMarshal() ([]byte, error) {
+	return []byte(i.String()), nil
+}
 `
 
 // Signed integers spanning zero.
@@ -149,6 +161,10 @@ func (i Num) String() string {
 		return fmt.Sprintf("Num(%d)", i+-2)
 	}
 	return _Num_name[_Num_index[i]:_Num_index[i+1]]
+}
+
+func (i Num) TextMarshal() ([]byte, error) {
+	return []byte(i.String()), nil
 }
 `
 
@@ -187,6 +203,10 @@ func (i Unum) String() string {
 	default:
 		return fmt.Sprintf("Unum(%d)", i)
 	}
+}
+
+func (i Unum) TextMarshal() ([]byte, error) {
+	return []byte(i.String()), nil
 }
 `
 
@@ -235,6 +255,10 @@ func (i Prime) String() string {
 		return str
 	}
 	return fmt.Sprintf("Prime(%d)", i)
+}
+
+func (i Prime) TextMarshal() ([]byte, error) {
+	return []byte(i.String()), nil
 }
 `
 
