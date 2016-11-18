@@ -17,17 +17,21 @@ import (
 // Golden represents a test case.
 type Golden struct {
 	name   string
+	prefix string
+	suffix string
 	input  string // input; the package clause is provided when running the test.
 	output string // exected output.
 }
 
 var golden = []Golden{
-	{"day", day_in, day_out},
-	{"offset", offset_in, offset_out},
-	{"gap", gap_in, gap_out},
-	{"num", num_in, num_out},
-	{"unum", unum_in, unum_out},
-	{"prime", prime_in, prime_out},
+	{"day", "", "", day_in, day_out},
+	{"offset", "", "", offset_in, offset_out},
+	{"gap", "", "", gap_in, gap_out},
+	{"num", "", "", num_in, num_out},
+	{"unum", "", "", unum_in, unum_out},
+	{"prime", "", "", prime_in, prime_out},
+	{"day_prefix", "Day", "", day_prefix_in, day_prefix_out},
+	{"day_suffix", "", "day", day_in, day_suffix_out},
 }
 
 // Each example starts with "type XXX [u]int", with a single space separating them.
@@ -57,8 +61,9 @@ func (i Day) String() string {
 	return _Day_name[_Day_index[i]:_Day_index[i+1]]
 }
 
-func (i Day) TextMarshal() ([]byte, error) {
-	return []byte(i.String()), nil
+func (i Day) MarshalText() ([]byte, error) {
+	s := i.String()
+	return []byte(s), nil
 }
 
 func (i *Day) UnmarshalText(text []byte) error {
@@ -97,8 +102,9 @@ func (i Number) String() string {
 	return _Number_name[_Number_index[i]:_Number_index[i+1]]
 }
 
-func (i Number) TextMarshal() ([]byte, error) {
-	return []byte(i.String()), nil
+func (i Number) MarshalText() ([]byte, error) {
+	s := i.String()
+	return []byte(s), nil
 }
 
 func (i *Number) UnmarshalText(text []byte) error {
@@ -154,8 +160,9 @@ func (i Gap) String() string {
 	}
 }
 
-func (i Gap) TextMarshal() ([]byte, error) {
-	return []byte(i.String()), nil
+func (i Gap) MarshalText() ([]byte, error) {
+	s := i.String()
+	return []byte(s), nil
 }
 
 func (i *Gap) UnmarshalText(text []byte) error {
@@ -204,8 +211,9 @@ func (i Num) String() string {
 	return _Num_name[_Num_index[i]:_Num_index[i+1]]
 }
 
-func (i Num) TextMarshal() ([]byte, error) {
-	return []byte(i.String()), nil
+func (i Num) MarshalText() ([]byte, error) {
+	s := i.String()
+	return []byte(s), nil
 }
 
 func (i *Num) UnmarshalText(text []byte) error {
@@ -256,8 +264,9 @@ func (i Unum) String() string {
 	}
 }
 
-func (i Unum) TextMarshal() ([]byte, error) {
-	return []byte(i.String()), nil
+func (i Unum) MarshalText() ([]byte, error) {
+	s := i.String()
+	return []byte(s), nil
 }
 
 func (i *Unum) UnmarshalText(text []byte) error {
@@ -325,8 +334,9 @@ func (i Prime) String() string {
 	return fmt.Sprintf("Prime(%d)", i)
 }
 
-func (i Prime) TextMarshal() ([]byte, error) {
-	return []byte(i.String()), nil
+func (i Prime) MarshalText() ([]byte, error) {
+	s := i.String()
+	return []byte(s), nil
 }
 
 func (i *Prime) UnmarshalText(text []byte) error {
@@ -365,9 +375,79 @@ func (i *Prime) UnmarshalText(text []byte) error {
 }
 `
 
+// Simple prefix test: enumeration of type int starting at 0.
+const day_prefix_in = `type Day int
+const (
+	DayMonday Day = iota
+	DayTuesday
+	DayWednesday
+	DayThursday
+	DayFriday
+	DaySaturday
+	DaySunday
+)
+`
+
+const day_prefix_out = `
+const _Day_name = "DayMondayDayTuesdayDayWednesdayDayThursdayDayFridayDaySaturdayDaySunday"
+
+var _Day_index = [...]uint8{0, 9, 19, 31, 42, 51, 62, 71}
+
+func (i Day) String() string {
+	if i < 0 || i >= Day(len(_Day_index)-1) {
+		return fmt.Sprintf("Day(%d)", i)
+	}
+	return _Day_name[_Day_index[i]:_Day_index[i+1]]
+}
+
+func (i Day) MarshalText() ([]byte, error) {
+	s := i.String()[3:]
+	return []byte(s), nil
+}
+
+func (i *Day) UnmarshalText(text []byte) error {
+	for idx := range _Day_index[1:] {
+		if string(text) == _Day_name[_Day_index[idx]+3:_Day_index[idx+1]] {
+			*i = Day(idx)
+			return nil
+		}
+	}
+	return fmt.Errorf("Invalid Day: '%s'", text)
+}
+`
+
+const day_suffix_out = `
+const _Day_name = "MondayTuesdayWednesdayThursdayFridaySaturdaySunday"
+
+var _Day_index = [...]uint8{0, 6, 13, 22, 30, 36, 44, 50}
+
+func (i Day) String() string {
+	if i < 0 || i >= Day(len(_Day_index)-1) {
+		return fmt.Sprintf("Day(%d)", i)
+	}
+	return _Day_name[_Day_index[i]:_Day_index[i+1]]
+}
+
+func (i Day) MarshalText() ([]byte, error) {
+	s := i.String()
+	s = s[0 : len(s)-3]
+	return []byte(s), nil
+}
+
+func (i *Day) UnmarshalText(text []byte) error {
+	for idx := range _Day_index[1:] {
+		if string(text) == _Day_name[_Day_index[idx]:_Day_index[idx+1]-3] {
+			*i = Day(idx)
+			return nil
+		}
+	}
+	return fmt.Errorf("Invalid Day: '%s'", text)
+}
+`
+
 func TestGolden(t *testing.T) {
 	for _, test := range golden {
-		var g Generator
+		var g = Generator{prefix: test.prefix, suffix: test.suffix}
 		input := "package test\n" + test.input
 		file := test.name + ".go"
 		g.parsePackage(".", []string{file}, input)
