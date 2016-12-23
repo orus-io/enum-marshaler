@@ -67,8 +67,9 @@ func (i Day) MarshalText() ([]byte, error) {
 }
 
 func (i *Day) UnmarshalText(text []byte) error {
+	sText := string(text)
 	for idx := range _Day_index[1:] {
-		if string(text) == _Day_name[_Day_index[idx]:_Day_index[idx+1]] {
+		if sText == _Day_name[_Day_index[idx]:_Day_index[idx+1]] {
 			*i = Day(idx)
 			return nil
 		}
@@ -108,8 +109,9 @@ func (i Number) MarshalText() ([]byte, error) {
 }
 
 func (i *Number) UnmarshalText(text []byte) error {
+	sText := string(text)
 	for idx := range _Number_index[1:] {
-		if string(text) == _Number_name[_Number_index[idx]:_Number_index[idx+1]] {
+		if sText == _Number_name[_Number_index[idx]:_Number_index[idx+1]] {
 			*i = Number(idx + 1)
 			return nil
 		}
@@ -217,8 +219,9 @@ func (i Num) MarshalText() ([]byte, error) {
 }
 
 func (i *Num) UnmarshalText(text []byte) error {
+	sText := string(text)
 	for idx := range _Num_index[1:] {
-		if string(text) == _Num_name[_Num_index[idx]:_Num_index[idx+1]] {
+		if sText == _Num_name[_Num_index[idx]:_Num_index[idx+1]] {
 			*i = Num(idx + -2)
 			return nil
 		}
@@ -406,8 +409,9 @@ func (i Day) MarshalText() ([]byte, error) {
 }
 
 func (i *Day) UnmarshalText(text []byte) error {
+	sText := string(text)
 	for idx := range _Day_index[1:] {
-		if string(text) == _Day_name[_Day_index[idx]+3:_Day_index[idx+1]] {
+		if sText == _Day_name[_Day_index[idx]+3:_Day_index[idx+1]] {
 			*i = Day(idx)
 			return nil
 		}
@@ -435,8 +439,9 @@ func (i Day) MarshalText() ([]byte, error) {
 }
 
 func (i *Day) UnmarshalText(text []byte) error {
+	sText := string(text)
 	for idx := range _Day_index[1:] {
-		if string(text) == _Day_name[_Day_index[idx]:_Day_index[idx+1]-3] {
+		if sText == _Day_name[_Day_index[idx]:_Day_index[idx+1]-3] {
 			*i = Day(idx)
 			return nil
 		}
