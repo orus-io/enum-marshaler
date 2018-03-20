@@ -18,8 +18,8 @@ constant names in (un)marshaling functions.
 ## Install
 
 ```bash
-get get -u github.com/orus-io/enum-marshaler
-get install github.com/orus-io/enum-marshaler
+go get -u github.com/orus-io/enum-marshaler
+go install github.com/orus-io/enum-marshaler
 ```
 
 ## Usage
